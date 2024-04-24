@@ -1,5 +1,4 @@
 
-```markdown
 # Java RMI Paxos-Based Fault-Tolerant Key-Value Store (Project 4)
 
 This repository hosts an advanced Java RMI (Remote Method Invocation) client-server application, which extends Project 3 by replacing the two-phase commit protocol with Paxos for enhanced fault tolerance and consistency. This project involves a key-value store replicated across five servers using the Paxos consensus algorithm to handle updates reliably even in the presence of server failures.
@@ -87,5 +86,3 @@ The project uses fixed port numbers to reduce the complexity of network configur
 ## Contributors
 
 - Pramod Kumar Undrakonda
-
-```
