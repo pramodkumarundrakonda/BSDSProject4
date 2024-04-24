@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Server Log Appender -->
+        <File name="ServerLog" fileName="logs/server.log">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} [%-5.5p] - %msg%n"/>
+        </File>
+
+        <!-- Client Log Appender -->
+        <File name="ClientLog" fileName="logs/client.log">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} [%-5.5p] - %msg%n"/>
+        </File>
+
+        <!-- Console Appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} [%-5.5p] - %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!-- Server Logger -->
+        <Logger name="server.ServerLogger" level="INFO" additivity="false">
+            <AppenderRef ref="ServerLog"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Client Logger -->
+        <Logger name="client.ClientLogger" level="INFO" additivity="false">
+            <AppenderRef ref="ClientLog"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Root Logger -->
+        <Root level="ERROR">
+            <AppenderRef ref="ServerLog"/>
+            <AppenderRef ref="ClientLog"/>
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>
