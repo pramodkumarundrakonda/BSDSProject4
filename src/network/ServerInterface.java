@@ -34,7 +34,7 @@ public interface ServerInterface extends Remote {
      * @return true if the operation is successfully committed, false otherwise.
      * @throws RemoteException If there is an issue with remote method invocation.
      */
-    boolean commit(Operation operation) throws RemoteException;
+    boolean commit(Operation operation, int serverport) throws RemoteException;
 
     /**
      * Retrieves a value for a specified key from the key-value store.
@@ -45,4 +45,5 @@ public interface ServerInterface extends Remote {
      */
     String getValue(String key) throws RemoteException;
 
+    boolean propose(Operation operation) throws RemoteException;
 }

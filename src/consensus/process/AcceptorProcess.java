@@ -1,6 +1,7 @@
 package consensus.process;
 
 import consensus.participant.ConsensusAcceptor;
+import consensus.participant.ConsensusLearner;
 import consensus.state.StateStore;
 import common.CustomLogger;
 import java.util.concurrent.BlockingQueue;
@@ -23,7 +24,7 @@ public class AcceptorProcess implements Runnable {
      * @param incomingProposals A thread-safe queue for incoming proposal operations.
      */
     public AcceptorProcess(StateStore stateStore, int serverPort, BlockingQueue<Operation> incomingProposals) {
-        this.acceptor = new ConsensusAcceptor(stateStore, serverPort);
+        this.acceptor = new ConsensusAcceptor(stateStore, serverPort, new ConsensusLearner(stateStore, serverPort));
         this.incomingProposals = incomingProposals;
     }
 

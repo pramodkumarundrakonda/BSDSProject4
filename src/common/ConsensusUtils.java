@@ -20,7 +20,6 @@ public class ConsensusUtils {
      * @return A unique proposal ID.
      */
     public static int generateProposalId(int serverPort) {
-        // This is a simple approach. For real systems, you might need a more complex method.
         return (int) (System.currentTimeMillis() % Integer.MAX_VALUE + serverPort);
     }
 
@@ -42,7 +41,6 @@ public class ConsensusUtils {
             Thread.sleep(durationMs);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            // You might want to log this or handle it according to your requirements.
         }
     }
 }

@@ -6,45 +6,63 @@ JC = javac
 # Java runtime
 JVM = java
 
-# Source files
-SERVER_SRC = src/server/*.java src/consensus/*.java src/network/*.java src/common/*.java
-CLIENT_SRC = src/client/*.java src/network/*.java src/common/*.java
 
-# Output directories
-BUILD_DIR = build
-SERVER_BUILD = $(BUILD_DIR)/server
-CLIENT_BUILD = $(BUILD_DIR)/client
+# Base directory for source files
+SRC_DIR = src
+
+
+# Packages
+SERVER_PKG = $(SRC_DIR)/server
+CLIENT_PKG = $(SRC_DIR)/client
+CONSENSUS_PKG = $(SRC_DIR)/consensus
+CONSENSUS_PARTICIPANT_PKG = $(CONSENSUS_PKG)/participant
+CONSENSUS_PROCESS_PKG = $(CONSENSUS_PKG)/process
+CONSENSUS_STATE_PKG = $(CONSENSUS_PKG)/state
+NETWORK_PKG = $(SRC_DIR)/network
+COMMON_PKG = $(SRC_DIR)/common
+
+# logs dir
 LOGS_DIR = logs
 
-# Create build directories
-$(shell mkdir -p $(SERVER_BUILD))
-$(shell mkdir -p $(CLIENT_BUILD))
-$(shell mkdir -p $(LOGS_DIR))
+# Output directory
+BUILD_DIR = build
+
+# Java files
+SERVER_FILES = $(wildcard $(SERVER_PKG)/*.java)
+CLIENT_FILES = $(wildcard $(CLIENT_PKG)/*.java)
+CONSENSUS_FILES = $(wildcard $(CONSENSUS_PKG)/*.java) \
+                  $(wildcard $(CONSENSUS_PARTICIPANT_PKG)/*.java) \
+                  $(wildcard $(CONSENSUS_PROCESS_PKG)/*.java) \
+                  $(wildcard $(CONSENSUS_STATE_PKG)/*.java)
+NETWORK_FILES = $(wildcard $(NETWORK_PKG)/*.java)
+COMMON_FILES = $(wildcard $(COMMON_PKG)/*.java)
+
+# Classpath
+CLASSPATH = .:$(BUILD_DIR)
 
 # Main classes
 SERVER_MAIN = server.ServerStarter
 CLIENT_MAIN = client.ClientApp
 
-# Classpath
-CLASSPATH = .:$(SERVER_BUILD):$(CLIENT_BUILD)
-
 # Compilation flags
 JFLAGS = -classpath $(CLASSPATH) -d $(BUILD_DIR)
 
-# Targets
 all: server client
 
-server:
-	$(JC) $(JFLAGS) $(SERVER_SRC)
+server: $(SERVER_FILES) $(CONSENSUS_FILES) $(NETWORK_FILES) $(COMMON_FILES)
+	mkdir -p $(BUILD_DIR)
+	$(JC) $(JFLAGS) $^
 
-client:
-	$(JC) $(JFLAGS) $(CLIENT_SRC)
+client: $(CLIENT_FILES) $(NETWORK_FILES) $(COMMON_FILES)
+	mkdir -p $(BUILD_DIR)
+	$(JC) $(JFLAGS) $^
+
 
 run-server:
 	$(JVM) -classpath $(CLASSPATH) $(SERVER_MAIN)
 
 run-client:
-	$(JVM) -classpath $(CLASSPATH) $(CLIENT_MAIN)
+	$(JVM) -classpath $(CLASSPATH) $(CLIENT_MAIN) $(PORT)
 
 clean:
 	rm -rf $(BUILD_DIR) $(LOGS_DIR)

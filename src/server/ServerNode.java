@@ -17,25 +17,34 @@ import java.util.List;
 public class ServerNode {
     private ServerCommunicator serverCommunicator;
     private final int serverPort;
+    private Thread acceptorThread;
 
     public ServerNode(int serverPort) {
         this.serverPort = serverPort;
     }
 
     public void startServer() {
+        StateStore stateStore = new StateStore();
+        ConsensusLearner learner = new ConsensusLearner(stateStore, serverPort);
+        ConsensusAcceptor acceptor = new ConsensusAcceptor(stateStore, serverPort, learner);
+        List<Integer> allLearnerAddresses = new ArrayList<>();
+
         try {
             if (serverCommunicator == null) {
                 // Initialize components only once
-                StateStore stateStore = new StateStore();
-                ConsensusAcceptor acceptor = new ConsensusAcceptor(stateStore, serverPort);
                 List<ConsensusAcceptor> acceptors = new ArrayList<>();
-                for (int i = 0; i < 5; i++) {
-                    acceptors.add(new ConsensusAcceptor(stateStore, 5000 + i));  // Example port numbers
-                }
-                ConsensusProposer proposer = new ConsensusProposer(stateStore, serverPort, acceptors);
-                ConsensusLearner learner = new ConsensusLearner(stateStore, serverPort);
+                for (int i = 1; i <= 5; i++) {
 
-                serverCommunicator = new ServerCommunicator(proposer, acceptor, learner);
+                    acceptors.add(new ConsensusAcceptor(stateStore, 5000 + i, new ConsensusLearner(stateStore, 5000 + i)));
+                    allLearnerAddresses.add(5000 + i);
+                }
+                ConsensusProposer proposer = new ConsensusProposer(stateStore, serverPort, acceptors, learner);
+
+
+                serverCommunicator = new ServerCommunicator(proposer, acceptor, null, allLearnerAddresses);
+
+                learner.setServerCommunicator(serverCommunicator);
+                serverCommunicator.setLearner(learner);
             }
 
             try {
@@ -48,6 +57,10 @@ public class ServerNode {
                 Registry registry = LocateRegistry.getRegistry(serverPort);
                 registry.rebind("PaxosServer", serverCommunicator);
             }
+
+            // Start acceptor in its own thread
+            acceptorThread = new Thread(acceptor);
+            acceptorThread.start();
 
             System.out.println("Server started on port " + serverPort + ". Ready to accept requests.");
         } catch (RemoteException e) {

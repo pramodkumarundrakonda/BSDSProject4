@@ -15,6 +15,8 @@ public class ProposerProcess implements Runnable {
     private final BlockingQueue<Operation> proposalQueue;
     private final CustomLogger logger = new CustomLogger(CustomLogger.LogLevel.INFO);
 
+
+
     /**
      * Constructs a ProposerProcess with the proposer's required dependencies.
      * @param proposer The proposer instance that will handle creating and sending proposals.

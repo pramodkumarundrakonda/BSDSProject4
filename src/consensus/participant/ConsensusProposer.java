@@ -1,74 +1,93 @@
 package consensus.participant;
 
 import common.CustomLogger;
-import common.ConsensusUtils;
 import consensus.state.Operation;
 import consensus.state.StateStore;
-
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConsensusProposer implements Runnable {
-
     private static final CustomLogger logger = new CustomLogger(CustomLogger.LogLevel.INFO);
-
-    // Atomic integer to generate unique proposal IDs across threads safely
-    private static final AtomicInteger proposalIdGenerator = new AtomicInteger(0);
+    private static final AtomicInteger proposalIdCounter = new AtomicInteger(0);
 
     private final StateStore stateStore;
     private final int serverPort;
     private final List<ConsensusAcceptor> acceptors;
     private final int quorumSize;
 
-    public ConsensusProposer(StateStore stateStore, int serverPort, List<ConsensusAcceptor> acceptors) {
+    private final ConsensusLearner learner;
+
+    public ConsensusProposer(StateStore stateStore, int serverPort, List<ConsensusAcceptor> acceptors, ConsensusLearner learner) {
         this.stateStore = stateStore;
         this.serverPort = serverPort;
         this.acceptors = acceptors;
-        this.quorumSize = acceptors.size() / 2 + 1; // Majority of acceptors
+        this.learner = learner;
+        this.quorumSize = acceptors.size() / 2 + 1; // Majority
     }
 
     public boolean propose(Operation operation) {
-        int proposalId = proposalIdGenerator.incrementAndGet() + serverPort;
-        int promisesReceived = 0;
+        int proposalId = generateUniqueProposalId();
+        logger.info("Proposer on port " + serverPort + " starting proposal with ID: " + proposalId);
 
-        // Prepare phase
+        if (sendPrepareRequests(proposalId)) {
+            if (sendAcceptRequests(proposalId, operation)) {
+                logger.info("Consensus reached on proposal ID: " + proposalId + " for operation: " + operation);
+                return true;
+            }
+        }
+        logger.warn("Failed to reach consensus on proposal ID: " + proposalId);
+        return false;
+    }
+
+    private int generateUniqueProposalId() {
+        return proposalIdCounter.incrementAndGet() + serverPort;
+    }
+
+    private boolean sendPrepareRequests(int proposalId) {
+        int promiseCount = 0;
         for (ConsensusAcceptor acceptor : acceptors) {
-            if (acceptor.prepare(proposalId, "Proposer@" + serverPort)) {
-                promisesReceived++;
-                logger.info("Proposer on port " + serverPort + " received a promise from an acceptor.");
-            }
-
-            if (promisesReceived >= quorumSize) {
-                logger.info("Proposer on port " + serverPort + " received enough promises, moving to accept phase.");
-                break;
+            try {
+                if (acceptor.prepare(proposalId, "Proposer@" + serverPort)) {
+                    promiseCount++;
+                    if (promiseCount >= quorumSize) {
+                        logger.info("Majority of promises received for proposal ID: " + proposalId);
+                        return true;
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Error sending prepare request to acceptor: " + e.getMessage());
             }
         }
+        return false;
+    }
 
-        if (promisesReceived < quorumSize) {
-            logger.warn("Proposer on port " + serverPort + " failed to receive majority promises.");
-            return false; // Not enough promises to proceed
-        }
-
-        // Accept phase
-        int acceptancesReceived = 0;
+    private boolean sendAcceptRequests(int proposalId, Operation operation) {
+        int acceptanceCount = 0;
         for (ConsensusAcceptor acceptor : acceptors) {
-            if (acceptor.accept(proposalId, operation)) {
-                acceptancesReceived++;
-                logger.info("Proposer on port " + serverPort + " received acceptance from an acceptor.");
-            }
+            try {
+                if (acceptor.accept(proposalId, operation)) {
+                    acceptanceCount++;
+                    if (acceptanceCount >= quorumSize) {
+                        logger.info("Majority of acceptances received for proposal ID: " + proposalId);
 
-            if (acceptancesReceived >= quorumSize) {
-                logger.info("Proposer on port " + serverPort + " received enough acceptances, committing the operation.");
-                return stateStore.applyOperation(operation);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Error sending accept request to acceptor: " + e.getMessage());
             }
         }
-
-        logger.warn("Proposer on port " + serverPort + " did not receive enough acceptances.");
-        return false; // Not enough acceptances
+        if (learner != null) {
+            try {
+                learner.learn(operation);  // Learner commits the operation
+                return true;
+            } catch (Exception e) {
+                logger.error("Error notifying learner: " + e.getMessage());
+            }
+        }
+        return false;
     }
 
     @Override
     public void run() {
-        // The run method would be used to propose operations periodically or based on some criteria
     }
 }

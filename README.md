@@ -15,6 +15,7 @@ This repository hosts an advanced Java RMI (Remote Method Invocation) client-ser
 - [Dependencies](#dependencies)
 - [Concurrency and Thread Safety](#concurrency-and-thread-safety)
 - [Configuration](#configuration)
+- [Fault Tolerance and Acceptor Failures](#fault-tolerance-and-acceptor-failures)
 - [Contributors](#contributors)
 
 ## Overview
@@ -35,9 +36,9 @@ The Java RMI Client-Server Application is now enhanced with the Paxos consensus 
 1. Ensure Java Development Kit (JDK) is installed on your system.
 2. Compile the source code using the provided Makefile:
    
-   ```bash
-   make all
-   ```
+```bash
+make clean all
+```
 
 ### Running the Servers
 
@@ -89,9 +90,9 @@ The system employs various mechanisms to ensure thread safety and manage concurr
 - **Atomic Variables**: Uses atomic variables for count and flag management where needed.
 - **Thread-Safe Collections**: Utilizes thread-safe variants of collections for storing state and managing data.
 
-## Configuration
-
-The project uses fixed port numbers to reduce the complexity of network configuration and ensure that the system can be easily deployed in different environments without additional setup. This approach is particularly beneficial in educational and testing scenarios where simplicity and reproducibility are crucial.
+## Fault Tolerance and Acceptor Failures
+- **Acceptor Failures**: Acceptor threads are designed to "fail" randomly to simulate real-world scenarios where network or server issues cause nodes to temporarily drop out of consensus. Each Acceptor has a mechanism to simulate a crash and subsequent recovery, demonstrating how Paxos can handle node failures gracefully.
+- **Recovery Mechanism**: Upon "failure," an Acceptor becomes inactive and stops responding to consensus requests. After a random delay, it restarts, resetting its state and rejoining the consensus process. This ensures that even if a failure occurs, the system remains operational and can continue processing requests once the Acceptor recovers.
 
 ## Contributors
 

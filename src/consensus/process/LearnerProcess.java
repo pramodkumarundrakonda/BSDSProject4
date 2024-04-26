@@ -3,6 +3,8 @@ package consensus.process;
 import consensus.participant.ConsensusLearner;
 import consensus.state.Operation;
 import common.CustomLogger;
+
+import java.rmi.RemoteException;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -27,23 +29,6 @@ public class LearnerProcess implements Runnable {
 
     @Override
     public void run() {
-        try {
-            while (!Thread.currentThread().isInterrupted()) {
-                // Wait for an operation to arrive in the queue
-                Operation operation = acceptedOperationsQueue.take();
-                logger.info("Learner process received accepted operation: " + operation);
 
-                // Commit the operation using the learner
-                boolean success = learner.learn(operation);
-                if (success) {
-                    logger.info("Learner successfully committed operation: " + operation);
-                } else {
-                    logger.warn("Learner failed to commit operation: " + operation);
-                }
-            }
-        } catch (InterruptedException e) {
-            logger.error("Learner process was interrupted: " + e.getMessage());
-            Thread.currentThread().interrupt(); // Restore interruption status
-        }
     }
 }

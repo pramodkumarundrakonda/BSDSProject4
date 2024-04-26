@@ -27,8 +27,7 @@ public class UserInterface {
         // Regular operation
         boolean running = true;
         while (running) {
-            System.out.println("\nEnter operation (PUT/GET/DELETE) followed by key and optionally value:");
-            System.out.println("Type 'exit' to quit.");
+            System.out.println("\nEnter operation (PUT/GET/DELETE) followed by key and optionally value. Type 'exit' to quit   :");
             String input = scanner.nextLine();
 
             if ("exit".equalsIgnoreCase(input.trim())) {
